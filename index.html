@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wordly is your personal dictionary for vocabulary, word meanings and pronunciation.">
+    <title>Wordly | Your Personal Dictionary</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="index.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <a href="#" class="logo" arai-label="Wordly Home">Wordly<span>.</span></a>
+        <button id="theme-toggle" class="theme-button" type="button" aria-label="Switch color theme">🌚 Dark mode</button>
+    </header>
+    
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">Your Personal Dictionary</p>
+            <h1>Discover the meaning of <span>words.</span></h1>
+            <p class="hero-description">Search, learn, listen, and build your vocabulary one word at a time.</p>
+            <form id="search-form" class="search-form">
+                <label for="word-input" class="visually-hidden">Enter a word</label>
+                <input type="search" id="word-input" placeholder="Enter a word, e.g. promiscous" autocomplete="off" required aria-label="Word to look up">
+                <button type="submit" id="search-button">Search</button>
+            </form> 
+            
+            <p id="status-message" role="status" aria-live="polite"></p>
+        </section>  
+        
+        <section id="results-section" class="results-section" aria-label="Dictionary results">
+            <div id="word-result"></div>
+        </section>
+        
+        <section class="favorites-section">
+            <div class="section-heading">
+                <div>
+                   <p class="eyebrow">Your Collection</p>
+                   <h2>Favorite Words<h2>
+                </div>
+                <span id="favorites-count" class="favorites-count">0 saved</span>
+           </div>
+
+           <div id="favorites-list" class="favorites-list">
+             <p id="empty-favorites" class="empty-message">
+                Your saved words will appear here. 
+             </p>
+           </div>
+        </section>
+    </main>
+    
+    <footer class="site-footer">
+        <p>Wordly - learn a new word every day.</p>
+        <p>Definitions provided by the Free Dictionary API.</p>
+    </footer>
+</body>
+</html>
+
+
+
+
+            
