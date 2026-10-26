@@ -1,5 +1,5 @@
 
-// Getting HTML elements
+// Getting HTML elements 
 
 const searchForm = document.getElementById("search-form");
 const wordInput = document.getElementById("word-input");
@@ -10,24 +10,32 @@ const themeToggle = document.getElementById("theme-toggle");
 const favoritesList = document.getElementById("favorites-list");
 const favoritesCount = document.getElementById("favorites-count");
 
+
 // Load saved favorites from local storage
 let favorites = [];
 
 try {
-    favorites = JSON.parse(
+    const savedFavorites = JSON.parse (
         localStorage.getItem("wordly-favorites")
-    ) || [];
+
+    );
+
+    favorites = Array.isArray(savedFavorites)           // This validates that favorites are an array and filters out entries without a valid word.
+        ? savedFavorites.filter(
+            item => item && typeof item.word === "string"
+        ) 
+        : [];
 } catch (error) {
     favorites = [];
 }
 
-// Show status message
+// SHow status message
 function showStatus(message, type = "") {
     statusMessage.textContent = message;
     statusMessage.className = type;
 }
 
-// Creating HTML elements
+// Creating HTML elements 
 function createElement(tag, className, text = "") {
     const element = document.createElement(tag);
 
@@ -37,16 +45,16 @@ function createElement(tag, className, text = "") {
 
     element.textContent = text;
     return element;
-}
+} 
 
-// Search for a word when the form is submitted
+// Search for a word when the form is submitted 
 searchForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const word = wordInput.value.trim();
 
     if (!word) {
-        showStatus("Please enter a word to search.", "error");
+        showStatus("PLease enter a word to search.", "error");
         return;
     }
 
@@ -66,44 +74,51 @@ searchForm.addEventListener("submit", async function (event) {
         const data = await response.json();
 
         if (!Array.isArray(data) || data.length === 0) {
-            throw new Error("Word not found");
+            throw new Error("Word not found"); 
         }
 
         const entry = data[0];
 
         displayWord(entry);
         showStatus(`Found the meaning of "${entry.word}".`, "success");
+
     } catch (error) {
         wordResult.replaceChildren();
 
-        showStatus(
-            "Sorry, we couldn't find that word. Check the spelling and try again.",
-            "error"
+        if (error.message === "Word not found") {
+            showStatus(
+                   "Sorry we couldn't find that word. Check the spelling and try again.",
+                    "error"
         );
+        } else {                                    // This assumes other network or request errors are not deliberately thrown with the message "Word not found".
+            showStatus(
+                "Unable to load the dictionary. Check your internet", "error"
+            );
+        }
+        
     } finally {
         searchButton.disabled = false;
     }
+
 });
 
-// Display the dictionary result
+
+// Display the dictionary result 
 function displayWord(entry) {
     wordResult.replaceChildren();
 
     const card = createElement("article", "word-card");
 
-    // Word heading
+    // Word heading 
     const header = createElement("div", "word-header");
     const wordInfo = createElement("div");
 
     const title = createElement("h2", "word-title", entry.word);
-
-    const phoneticText =
-        entry.phonetic ||
-        (entry.phonetics || []).find(item => item.text)?.text ||
-        "";
+    
+    const phoneticText = entry.phonetic || (entry.phonetics || []).find(item => item.text)?.text || "";
 
     const phonetic = createElement("p", "phonetic", phoneticText);
-
+    
     wordInfo.append(title, phonetic);
 
     // Pronunciation and favorite button
@@ -113,9 +128,7 @@ function displayWord(entry) {
 
     if (audioItem) {
         const audioButton = createElement(
-            "button",
-            "icon-button",
-            "Listen"
+            "button", "icon-button", "Listen" 
         );
 
         audioButton.type = "button";
@@ -123,25 +136,23 @@ function displayWord(entry) {
         audioButton.addEventListener("click", function () {
             const audio = new Audio(
                 audioItem.audio.startsWith("//")
-                    ? `https:${audioItem.audio}`
-                    : audioItem.audio
+                ? `https:${audioItem.audio}`
+                : audioItem.audio
             );
 
             audio.play().catch(() => {
                 showStatus(
-                    "Audio playback failed. Please try again.",
-                    "error"
+                    "Audio playback failed. Please try again.", "error"
                 );
             });
+
         });
 
         actions.appendChild(audioButton);
     }
 
     const favoriteButton = createElement(
-        "button",
-        "icon-button",
-        isFavorite(entry.word) ? "♥ Saved" : "♡ Save word"
+        "button", "icon-button", isFavorite(entry.word) ? "♥ Saved" : "♡ Save word"
     );
 
     favoriteButton.type = "button";
@@ -152,14 +163,14 @@ function displayWord(entry) {
 
     favoriteButton.addEventListener("click", function () {
         toggleFavorite(entry);
-
+        
         favoriteButton.textContent = isFavorite(entry.word)
-            ? "♥ Saved"
-            : "♡ Save word";
+              ? "♥ Saved"
+              : "♡ Save word";
 
         favoriteButton.classList.toggle(
-            "favorite-active",
-            isFavorite(entry.word)
+              "favorite-active",
+              isFavorite(entry.word)
         );
     });
 
@@ -167,23 +178,24 @@ function displayWord(entry) {
     header.append(wordInfo, actions);
     card.appendChild(header);
 
-    // Display meanings and definitions
+    // Display meanings and definitions 
     (entry.meanings || []).forEach(function (meaning) {
         const meaningSection = createElement(
-            "section",
+            "section", 
             "meaning-section"
         );
 
         const partOfSpeech = createElement(
-            "p",
-            "part-of-speech",
+            "p", 
+            "part-of-speech", 
             meaning.partOfSpeech
+        ); 
+
+        const definitionList =createElement(
+            "ol",
+            "definition-list" 
         );
 
-        const definitionList = createElement(
-            "ol",
-            "definition-list"
-        );
 
         (meaning.definitions || []).forEach(function (item) {
             const listItem = createElement("li", "", item.definition);
@@ -222,9 +234,10 @@ function displayWord(entry) {
             });
 
             meaningSection.append(label, tags);
+        
         }
 
-        // Display antonyms
+        // Display antonyms 
         const antonyms = meaning.antonyms || [];
 
         if (antonyms.length > 0) {
@@ -249,42 +262,42 @@ function displayWord(entry) {
     });
 
     // Display word origin
+
     if (entry.origin) {
         const originLabel = createElement(
-            "p",
-            "detail-label",
-            "Word origin"
+            "p", "detail-label", "Word origin"
         );
 
         const origin = createElement("p", "", entry.origin);
 
         card.append(originLabel, origin);
     }
-
-    // Link to the dictionary source
+    
+    // Link to the dictionary source 
     const sourceLink = createElement(
-        "a",
-        "source-link",
-        "View dictionary source"
+        "a", "source-link", "View dictionary source"
     );
-
-    sourceLink.href =
-        `https://dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(entry.word)}`;
+    
+    sourceLink.href = 
+          `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(entry.word)}`;
 
     sourceLink.target = "_blank";
     sourceLink.rel = "noopener noreferrer";
 
     card.appendChild(sourceLink);
     wordResult.appendChild(card);
-}
 
-// Check whether a word is already a favorite
+}    
+ 
+
+// CHeck whether a word is already a favorite 
 function isFavorite(word) {
     return favorites.some(
         item => item.word.toLowerCase() === word.toLowerCase()
     );
 }
 
+            
 // Add or remove a favorite word
 function toggleFavorite(entry) {
     if (isFavorite(entry.word)) {
@@ -293,44 +306,42 @@ function toggleFavorite(entry) {
         );
 
         showStatus(
-            `Removed "${entry.word}" from favorites.`,
-            "success"
+            `Removed "${entry.word}" from favorites`, "success"
         );
     } else {
         favorites.push({
-            word: entry.word,
-            phonetic:
-                entry.phonetic ||
-                (entry.phonetics || []).find(item => item.text)?.text ||
-                ""
+            word: entry.word, 
+            phonetic: 
+                    entry.phonetic || 
+                    (entry.phonetics || []).find(item => item.text)?.text || ""
+
         });
 
         showStatus(
-            `Saved "${entry.word}" to favorites.`,
-            "success"
+            `Saved "${entry.word}" to favorites.`, "success"
         );
     }
 
-    saveFavorites();
-    displayFavorites();
+     saveFavorites();
+     displayFavorites();
+
 }
 
-// Save favorites in the browser
+// Save favorites in the browser 
 function saveFavorites() {
     try {
         localStorage.setItem(
-            "wordly-favorites",
-            JSON.stringify(favorites)
+            "wordly-favorites", 
+            JSON.stringify(favorites) 
         );
     } catch (error) {
         showStatus(
-            "Unable to save favorites in this browser.",
-            "error"
+            "Unable to save favorites in this browser.", "error"
         );
     }
-}
+}  
 
-// Display favorite words
+// Display favorite words 
 function displayFavorites() {
     favoritesList.replaceChildren();
 
@@ -339,9 +350,7 @@ function displayFavorites() {
     if (favorites.length === 0) {
         favoritesList.appendChild(
             createElement(
-                "p",
-                "empty-message",
-                "Your saved words will appear here."
+                "p", "empty-message", "Your saved words will appear here."
             )
         );
 
@@ -350,26 +359,24 @@ function displayFavorites() {
 
     favorites.forEach(function (item) {
         const card = createElement("article", "favorite-card");
-
+        
         const word = createElement("p", "favorite-word", item.word);
 
         const phonetic = createElement(
-            "p",
-            "favorite-phonetic",
-            item.phonetic
+            "p", "favorite-phonetic", item.phonetic
         );
 
         word.addEventListener("click", function () {
-            wordInput.value = item.word;
+
+            wordInput.value = item.word; 
             searchForm.requestSubmit();
+            
         });
 
         const actions = createElement("div", "favorite-actions");
 
         const viewButton = createElement(
-            "button",
-            "icon-button",
-            "View meaning"
+            "button", "icon-button", "View meaning"
         );
 
         viewButton.type = "button";
@@ -380,62 +387,73 @@ function displayFavorites() {
         });
 
         const removeButton = createElement(
-            "button",
-            "icon-button",
-            "Remove"
+            "button", "icon-button", "Remove"
         );
 
         removeButton.type = "button";
 
         removeButton.addEventListener("click", function () {
             favorites = favorites.filter(
-                favorite =>
-                    favorite.word.toLowerCase() !== item.word.toLowerCase()
+                favorite => 
+                   favorite.word.toLowerCase() !== item.word.toLowerCase() 
             );
 
             saveFavorites();
             displayFavorites();
 
             showStatus(
-                `Removed "${item.word}" from favorites.`,
-                "success"
+                `Removed "${item.word}" from favorites.`, "success"
             );
+
         });
 
-        actions.append(viewButton, removeButton);
+        actions.append(viewButton, removeButton); 
         card.append(word, phonetic, actions);
-        favoritesList.appendChild(card);
-    });
-}
+        favoritesList.appendChild(card);      
 
-// Toggle between light and dark themes
+    });
+} 
+
+// Toogle between light and dark themes 
 themeToggle.addEventListener("click", function () {
     document.body.classList.toggle("dark-theme");
 
-    const darkMode =
-        document.body.classList.contains("dark-theme");
+    const darkMode = document.body.classList.contains("dark-theme");
 
     themeToggle.textContent = darkMode
-        ? "☀️ Light mode"
+            ? "☀️ Light mode"
         : "🌚 Dark mode";
 
-    localStorage.setItem(
+    try{
+        localStorage.setItem(
         "wordly-theme",
         darkMode ? "dark" : "light"
+
     );
+    } catch (error) {                     // The theme can still change visually even if the browser cannot save the preference.
+        showStatus(
+            "Unable to save the theme preference.", "error"
+        );
+    }
+
 });
 
-// Restore the saved theme when the page opens
+// Restore the save theme when the page opens 
 try {
     const savedTheme = localStorage.getItem("wordly-theme");
-
+    
     if (savedTheme === "dark") {
         document.body.classList.add("dark-theme");
         themeToggle.textContent = "☀️ Light mode";
     }
 } catch (error) {
-    // Continue using the default light theme if storage is unavailable.
+    // Continue using the default light if theme is not available
+
 }
 
-// Display saved favorites when the page opens
+// Display saved favorites when the page opens 
 displayFavorites();
+
+
+
+
