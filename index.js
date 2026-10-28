@@ -124,29 +124,59 @@ function displayWord(entry) {
     // Pronunciation and favorite button
     const actions = createElement("div", "word-actions");
 
-    const audioItem = (entry.phonetics || []).find(item => item.audio);
+    const audioItem = (entry.phonetics || []).find(item => item.audio && item.audio.trim() !== "");
 
     if (audioItem) {
         const audioButton = createElement(
-            "button", "icon-button", "Listen" 
+            "button", "icon-button", "🔊 Listen" 
         );
 
         audioButton.type = "button";
 
-        audioButton.addEventListener("click", function () {
-            const audio = new Audio(
-                audioItem.audio.startsWith("//")
-                ? `https:${audioItem.audio}`
-                : audioItem.audio
-            );
+        audioButton.addEventListener("click", async function () {
+            try{
+                const audioUrl = audioItem.audio.startsWith("//")
+                     ? `https:${audioItem.audio}`
+                     : audioItem.audio.startsWith("/")
+                        ? `https://api.dictionaryapi.dev${audioItem.audio}`
+                        : audioItem.audio;
 
-            audio.play().catch(() => {
-                showStatus(
-                    "Audio playback failed. Please try again.", "error"
-                );
-            });
+                console.log("Pronunciation audio URL:", audioUrl);                    // Try playing the dictionary API audio first.
 
+                const audio = new Audio(audioUrl);
+
+                await audio.play();
+
+                showStatus("Playing pronunciation...", "success");
+
+            } catch (error) {
+
+                console.error("Dictionary audio failed:", error);            
+
+
+                if ("speechSynthesis" in window) {                      // If the audio fails, use the browser's speech synthesis to pronounce the word instead.
+
+                    window.speechSynthesis.cancel();
+                    
+                    const utterance = new SpeechSynthesisUtterance(entry.word);        
+                    utterance.lang = "en-GB";
+
+                    utterance.onstart = function () {
+                        showStatus("Playing browser pronunciation...", "success"); 
+                    };
+
+                    utterance.onerror = function () {
+                        showStatus("Pronunciation is unavailable right now.", "error"); 
+                    };
+
+                    window.speechSynthesis.speak(utterance); 
+                } else {
+                    showStatus("Pronunciation is available right now.", "error");
+                }
+
+            }
         });
+       
 
         actions.appendChild(audioButton);
     }
